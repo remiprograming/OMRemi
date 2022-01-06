@@ -8,6 +8,7 @@ import random
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
+from sklearn import metrics
 
 def extract_notes_from_doc(cropobjects):
     """Finds all ``(full-notehead, stem)`` pairs that form
@@ -129,8 +130,6 @@ for qn in qn_resized:
 for hn in hn_resized:
     hn[hn > 0] = 1
 
-show_masks(qn_resized[:25])
-show_masks(hn_resized[-25:])
 
 n_hn = len(hn_resized)
 
@@ -166,3 +165,8 @@ KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
 y_test_pred = clf.predict(X_test)
 
 print(classification_report(y_test, y_test_pred, target_names=['half', 'quarter']))
+disp = metrics.ConfusionMatrixDisplay.from_predictions(y_test, y_test_pred)
+disp.figure_.suptitle("Confusion Matrix")
+print(f"Confusion matrix:\n{disp.confusion_matrix}")
+
+plt.show()
