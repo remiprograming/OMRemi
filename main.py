@@ -1,0 +1,1 @@
+print('harnas makes me strong')
