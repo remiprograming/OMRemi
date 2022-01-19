@@ -99,7 +99,7 @@ def show_masks(masks, row_length=5):
 
 
 # Change this to reflect wherever your MUSCIMA++ data lives
-CROPOBJECT_DIR = 'D:/OMR/dataset/data/cropobjects_withstaff'
+CROPOBJECT_DIR = 'C:/Users/Kamil/Desktop/omr/muscima/data/cropobjects_withstaff'
 
 cropobject_fnames = [os.path.join(CROPOBJECT_DIR, f) for f in os.listdir(CROPOBJECT_DIR)]
 docs = [parse_cropobject_list(f) for f in cropobject_fnames]
