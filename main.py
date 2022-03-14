@@ -1,5 +1,7 @@
 import itertools
 import os
+
+import cv2
 from muscima.io import parse_cropobject_list
 import numpy
 import matplotlib.pyplot as plt
@@ -9,6 +11,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 from sklearn import metrics
+import sakuya as sak
+from joblib import dump, load
 
 def extract_notes_from_doc(cropobjects):
     """Finds all ``(full-notehead, stem)`` pairs that form
@@ -99,7 +103,7 @@ def show_masks(masks, row_length=5):
 
 
 # Change this to reflect wherever your MUSCIMA++ data lives
-CROPOBJECT_DIR = 'C:/Users/Kamil/Desktop/omr/muscima/data/cropobjects_withstaff'
+CROPOBJECT_DIR = 'C:/Users/Kamil/Desktop/omr/muscima/data/cropobjects_manual'
 
 cropobject_fnames = [os.path.join(CROPOBJECT_DIR, f) for f in os.listdir(CROPOBJECT_DIR)]
 docs = [parse_cropobject_list(f) for f in cropobject_fnames]
@@ -118,6 +122,7 @@ print(len(qns), len(hns))
 qn_images = [get_image(qn) for qn in qns]
 hn_images = [get_image(hn) for hn in hns]
 
+
 show_masks(qn_images[:25])
 show_masks(hn_images[:25])
 
@@ -135,8 +140,8 @@ n_hn = len(hn_resized)
 
 random.shuffle(qn_resized)
 qn_selected = qn_resized[:n_hn]
-Q_LABEL = 1
-H_LABEL = 0
+Q_LABEL = f'quarter'
+H_LABEL = f'half'
 
 qn_labels = [Q_LABEL for _ in qn_selected]
 hn_labels = [H_LABEL for _ in hn_resized]
@@ -154,6 +159,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 K=5
 
+
+
+
+
 # Trying the defaults first.
 clf = KNeighborsClassifier(n_neighbors=K)
 clf.fit(X_train, y_train)
@@ -162,11 +171,14 @@ KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
            metric_params=None, n_jobs=1, n_neighbors=5, p=2,
            weights='uniform')
 
+dump(clf, f'clf.fumo')
+
 y_test_pred = clf.predict(X_test)
 
 print(classification_report(y_test, y_test_pred, target_names=['half', 'quarter']))
 disp = metrics.ConfusionMatrixDisplay.from_predictions(y_test, y_test_pred)
 disp.figure_.suptitle("Confusion Matrix")
 print(f"Confusion matrix:\n{disp.confusion_matrix}")
+
 
 plt.show()
