@@ -112,7 +112,7 @@ def getStaffData(imgInput):
 	height = len(imgInput)
 
 
-	imgBinary = imgInput
+	imgBinary = cv2.bitwise_not(imgInput)
 
 	# Output binary image
 
@@ -190,4 +190,70 @@ def getStaffData(imgInput):
 	currentStaff = Staff(staffLineSpacing,staffLineThickness,staffTops)
 	return currentStaff
 
-x = getStaffData(sakuya.binarize(f'w-21_p008.png'))
+def testVerticalThreshold(img,x,y,threshold):
+	upperY = y
+	lowerY = y
+	while (upperY >= 0):
+		if (img[upperY-1,x] == 0):
+			upperY -= 1
+		else:
+			break
+	while (lowerY <= len(img)):
+		if (img[lowerY+1,x] == 0):
+			lowerY += 1
+		else:
+			break
+
+	return (lowerY - upperY <= threshold),upperY,lowerY
+
+
+def removeStaffLinesSP(img, staff):
+
+	linet = 2
+
+	staffLineSpacing = staff.lineSpacing
+	staffLineThickness = staff.lineThickness
+	# Threshold for black pixel height
+	threshold = round(staffLineSpacing / 2)
+	width = len(img[1])
+
+	for i in staff.tops:
+		for y in range(0, 4 * staffLineSpacing + 1, staffLineSpacing):
+			# For each staff line,
+			print("i + y: " + str(i + y))
+
+
+			yRef = i + y
+			for x in range(width - 1, 0, -1):
+				if (not (img[yRef, x] == 0)):
+					# Find closest black pixel vertically
+					for j in range(1, round(threshold/2)+staff.lineThickness):
+						if (img[yRef + j, x] == 0):
+							yRef = yRef + j
+							break
+						if (img[yRef - j, x] == 0):
+							yRef = yRef - j
+							break
+
+				verticalThresholdResult = testVerticalThreshold(img, x, yRef, ((staffLineThickness * 5 / 4)))
+
+				if (verticalThresholdResult[0]):
+					cv2.line(img, (x, verticalThresholdResult[1]), (x, verticalThresholdResult[2]), 255)
+
+
+	# Fix broken objects by erosion followed by dilation
+	kernel = np.ones((staff.lineThickness, staff.lineThickness), np.uint8)
+	img = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+
+	# Output image with staff lines removed
+	imageName = 'a'
+	cv2.imwrite('staff_removal_' + imageName + '.png', img)
+
+	return img
+
+
+file = f'w-21_p008.png'
+
+x = getStaffData(sakuya.binarize(file))
+
+removeStaffLinesSP(sakuya.binarize(file), x)

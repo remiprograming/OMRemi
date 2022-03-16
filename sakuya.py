@@ -10,9 +10,9 @@ def binarize(file):
 
     th, im_th = cv.threshold(im_gray, 128, 255, cv.THRESH_OTSU)
     cv.imwrite(f'step.png', im_th)
-    im = cv.bitwise_not(im_th)
 
-    return im
+
+    return im_th
 
 
 

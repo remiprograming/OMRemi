@@ -11,9 +11,8 @@ import cv2
 import sakuya
 
 
-image = sakuya.binarize(f'w-21_p008.png')
-#image = cv2.imread(f'w-21_p008.png', cv2.IMREAD_GRAYSCALE)
-
+image = sakuya.binarize(f'staff_removal_a.png')
+image = cv2.bitwise_not(image)
 # apply threshold
 thresh = threshold_otsu(image)
 bw = closing(image > thresh, square(3))
