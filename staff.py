@@ -252,8 +252,5 @@ def removeStaffLinesSP(img, staff):
 	return img
 
 
-file = f'w-21_p008.png'
 
-x = getStaffData(sakuya.binarize(file))
 
-removeStaffLinesSP(sakuya.binarize(file), x)

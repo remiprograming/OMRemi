@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 from joblib import dump, load
+import sklearn.metrics as skm
 
 
 def binarize(file):
@@ -16,16 +17,11 @@ def binarize(file):
 
 
 
-def load_object(file):
+def load_object(im):
 
-    im = cv.imread(file)
 
-    im_gray = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
 
-    th, im_gray_th_otsu = cv.threshold(im_gray, 180, 255, cv.THRESH_OTSU)
-    im = cv.bitwise_not(im_gray_th_otsu)
     im = cv.resize(im, (10,40))
-    cv.imwrite(f'final.png', im)
     arr = []
     for x in im:
         for y in x:
@@ -36,11 +32,13 @@ def load_object(file):
 
     fin = np.array(arr)
     fin = fin.reshape((1, -1))
-    print(fin.shape)
 
     return fin
 
 def recognize(image):
+    image = load_object(image)
     clf = load(f'clf.fumo')
     pred = clf.predict(image)
-    return pred
+    predp = clf.predict_proba(image)
+
+    return pred, predp
