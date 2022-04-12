@@ -2,7 +2,8 @@ import cv2 as cv
 import numpy as np
 from joblib import dump, load
 import sklearn.metrics as skm
-
+import tensorflow as tf
+from tensorflow.keras import datasets, layers, models
 
 def binarize(file):
     im = cv.imread(file)
@@ -19,11 +20,20 @@ def binarize(file):
 
 def load_object(im):
 
+    blank = np.zeros((64, 64))
+    h, w = im.shape
+    hh, ww = blank.shape
+    yoff = round((hh - h) / 2)
+    xoff = round((ww - w) / 2)
+    print(im.shape)
+    print(blank.shape)
+    try:
+        blank[yoff:yoff + h, xoff:xoff + w] = im
+    except:
+        print('error')
 
-
-    im = cv.resize(im, (10,40))
     arr = []
-    for x in im:
+    for x in blank:
         for y in x:
             if y > 0:
                 arr.append(y-254)
@@ -31,14 +41,14 @@ def load_object(im):
                 arr.append(y)
 
     fin = np.array(arr)
-    fin = fin.reshape((1, -1))
+    fin = fin.reshape(1, 64, 64, 1)
 
     return fin
 
 def recognize(image):
-    image = load_object(image)
-    clf = load(f'clf.fumo')
-    pred = clf.predict(image)
-    predp = clf.predict_proba(image)
 
-    return pred, predp
+    t = load_object(image)
+    model = tf.keras.models.load_model('model')
+    pred = model.predict(t)
+    score = tf.nn.softmax(pred[0])
+    return pred, score
