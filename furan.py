@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import numpy as np
 
 from skimage.filters import threshold_otsu
 from skimage.segmentation import clear_border
@@ -64,11 +65,17 @@ def remilialize(file):
         cv2.imwrite(f'bloat/object{i}.png', temp)
         i += 1
 
+    score = []
     preds=[]
+    i = 0
     for im in imarr:
-        preds.append(sakuya.recognize(im))
+        pr, scr = sakuya.recognize(im)
+        preds.append(pr)
+        score.append(f'{i}. {np.argmax(scr)}')
+        i+=1
 
-    conf = 0.99
+    print(score)
+    conf = -1
     detected = []
     i = 0
     for ped in preds:
@@ -76,6 +83,7 @@ def remilialize(file):
             y = x.tolist()
             for h in y:
                 if h > conf:
+                    print(ped[0], h)
                     detected.append((ped[0], regions[i]))
         i+=1
 
@@ -119,7 +127,6 @@ def remilialize(file):
 
 
     plt.savefig(f'final2.png')
-
 
 
 
