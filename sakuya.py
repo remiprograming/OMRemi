@@ -1,10 +1,11 @@
+import cv2
 import cv2 as cv
 import numpy as np
 from joblib import dump, load
 import sklearn.metrics as skm
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
-
+dupac = 0
 def binarize(file):
     im = cv.imread(file)
 
@@ -19,7 +20,8 @@ def binarize(file):
 
 
 def load_object(im):
-
+    global dupac
+    dupac += 1
     blank = np.zeros((64, 64))
     h, w = im.shape
     hh, ww = blank.shape
@@ -32,6 +34,7 @@ def load_object(im):
     except:
         print('error')
 
+    cv2.imwrite(f'bloac/object{dupac}.png', blank)
     arr = []
     for x in blank:
         for y in x:
@@ -43,11 +46,13 @@ def load_object(im):
     fin = np.array(arr)
     fin = fin.reshape(1, 64, 64, 1)
 
+
     return fin
 
 def recognize(image):
 
     t = load_object(image)
+
     model = tf.keras.models.load_model('model')
     pred = model.predict(t)
     score = tf.nn.softmax(pred[0])
