@@ -31,7 +31,7 @@ class Staff:
 		for top in self.tops:
 			if (treble):
 				self.trebles.append(top)
-				treble = False
+				treble = True
 			else:
 				self.basses.append(top)
 				treble = True
@@ -50,7 +50,7 @@ class Staff:
 				if (lineDifferenceIsOdd):
 					currentY = currentY + (1 if plusOne else 0)
 					plusOne = not (plusOne)
-			treble = (not (treble))
+			#treble = (not (treble))
 			if (treble):
 				pitches = self.treblePitches
 			else:
@@ -60,7 +60,7 @@ class Staff:
 		print(self.lines)
 
 	def getPitch(self, y):
-		yValues = self.lines.keys()
+		yValues = list(self.lines.keys())
 		yValues.sort()
 		key = bisect.bisect_left(yValues, y)
 		if (not (key == 0)):

@@ -21,7 +21,6 @@ def binarize(file):
 
 def load_object(im):
     global dupac
-    dupac += 1
     blank = np.zeros((64, 64))
     h, w = im.shape
     hh, ww = blank.shape
@@ -44,16 +43,35 @@ def load_object(im):
                 arr.append(y)
 
     fin = np.array(arr)
-    fin = fin.reshape(1, 64, 64, 1)
+    fin = fin.reshape(1, -1)
 
-
+    dupac += 1
     return fin
 
 def recognize(image):
 
-    t = load_object(image)
+    image = load_object(image)
 
-    model = tf.keras.models.load_model('model')
-    pred = model.predict(t)
-    score = tf.nn.softmax(pred[0])
-    return pred, score
+    model = load('clf.fumo')
+    pred = model.predict(image)
+    predp = model.predict_proba(image)
+    return pred, predp
+
+    # t = load_object(image)
+    #
+    # model = tf.keras.models.load_model('model')
+    # pred = model.predict(t)
+    # score = tf.nn.softmax(pred[0])
+    # return pred, score
+
+
+def find_notes(centroids, staf):
+    notes = []
+    duppa = 0
+    for x in centroids:
+        try:
+            notes.append(staf.getPitch(x[0]) + f' {duppa}')
+        except:
+            notes.append(f'{duppa}')
+        duppa +=1
+    return notes

@@ -57,10 +57,13 @@ def remilialize(file):
 
     im = cv2.bitwise_not(im)
     imarr=[]
+    centroids = []
     i = 0
     for reg in regions:
         mr, mc, xr, xc = reg.bbox
         temp = im[mr:xr, mc:xc]
+
+        centroids.append(reg.centroid)
         imarr.append(temp)
         cv2.imwrite(f'bloat/object{i}.png', temp)
         i += 1
@@ -75,6 +78,10 @@ def remilialize(file):
         i+=1
 
     print(score)
+
+    print(sakuya.find_notes(centroids, x))
+
+
     conf = -1
     detected = []
     i = 0
