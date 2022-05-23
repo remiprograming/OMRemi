@@ -30,6 +30,8 @@ CROPOBJECT_DIR = 'muscima/data/cropobjects_manual'
 cropobject_fnames = [os.path.join(CROPOBJECT_DIR, f) for f in os.listdir(CROPOBJECT_DIR)]
 docs = [parse_cropobject_list(f) for f in cropobject_fnames]
 
+classes = []
+
 def extract_notes_from_doc(cropobjects):
     """Finds all ``(full-notehead, stem)`` pairs that form
     quarter or half notes. Returns two lists of CropObject tuples:
@@ -37,10 +39,14 @@ def extract_notes_from_doc(cropobjects):
 
     :returns: quarter_notes, half_notes
     """
+    global classes
+
     _cropobj_dict = {c.objid: c for c in cropobjects}
 
     notes = []
     for c in cropobjects:
+        if not c.clsname in classes:
+            classes.append(c.clsname)
         if 'notehead' in c.clsname:
             _has_stem = False
             _has_beam_or_flag = False
@@ -57,6 +63,7 @@ def extract_notes_from_doc(cropobjects):
     quarter_notes = []
     eighth_notes = []
     sixteenth_notes = []
+    bloat = []
 
     for arr in notes:
         if arr[0].clsname == 'notehead-empty':
@@ -85,18 +92,23 @@ def extract_notes_from_doc(cropobjects):
                 eighth_notes.append(arr)
             elif stem and flagbeams == 2:
                 sixteenth_notes.append(arr)
+        else:
+            bloat.append(arr)
 
-    return full_notes, half_notes, quarter_notes, eighth_notes, sixteenth_notes
+    return full_notes, half_notes, quarter_notes, eighth_notes, sixteenth_notes, bloat
 
-full_notes, half_notes, quarter_notes, eighth_notes, sixteenth_notes = [], [], [], [], []
+full_notes, half_notes, quarter_notes, eighth_notes, sixteenth_notes, bloat = [], [], [], [], [], []
 for doc in docs:
-    full, half, quarter, eighth, sixteenth = extract_notes_from_doc(doc)
+    full, half, quarter, eighth, sixteenth, blt = extract_notes_from_doc(doc)
     full_notes.extend(full)
     half_notes.extend(half)
     quarter_notes.extend(quarter)
     eighth_notes.extend(eighth)
     sixteenth_notes.extend(sixteenth)
+    bloat.extend(blt)
 
+# print(classes)
+# quit()
 
 # print(full_notes)
 # print(half_notes)
@@ -137,7 +149,7 @@ half_images = [get_image(n) for n in half_notes]
 quarter_images = [get_image(n) for n in quarter_notes]
 eighth_images = [get_image(n) for n in eighth_notes]
 sixteenth_images = [get_image(n) for n in sixteenth_notes]
-
+bloat_images = [get_image(n) for n in bloat]
 
 def show_mask(mask):
     plt.imshow(mask, cmap='gray', interpolation='nearest')
@@ -167,6 +179,7 @@ show_masks(half_images[:25])
 show_masks(quarter_images[:25])
 show_masks(eighth_images[:25])
 show_masks(sixteenth_images[:25])
+show_masks(bloat_images[:25])
 
 def paste(im):
     #resize image im to be of size (64, 64) preserving aspect ratio
@@ -193,6 +206,7 @@ half_resized = [paste(n) for n in half_images]
 quarter_resized = [paste(n) for n in quarter_images]
 eighth_resized = [paste(n) for n in eighth_images]
 sixteenth_resized = [paste(n) for n in sixteenth_images]
+bloat_resized = [paste(n) for n in bloat_images]
 
 
 # And re-binarize, to compensate for interpolation effects
@@ -201,6 +215,7 @@ half_resized = [numpy.where(n > 0, 1, 0) for n in half_resized]
 quarter_resized = [numpy.where(n > 0, 1, 0) for n in quarter_resized]
 eighth_resized = [numpy.where(n > 0, 1, 0) for n in eighth_resized]
 sixteenth_resized = [numpy.where(n > 0, 1, 0) for n in sixteenth_resized]
+bloat_resized = [numpy.where(n > 0, 1, 0) for n in bloat_resized]
 
 
 show_masks(full_resized[:25])
@@ -208,24 +223,28 @@ show_masks(half_resized[:25])
 show_masks(quarter_resized[:25])
 show_masks(eighth_resized[:25])
 show_masks(sixteenth_resized[:25])
+show_masks(bloat_resized[:25])
 
 F_LABEL = 0
 H_LABEL = 1
 Q_LABEL = 2
 E_LABEL = 3
 S_LABEL = 4
+B_LABEL = 5
 
 full_labels = [F_LABEL for _ in full_resized]
 half_labels = [H_LABEL for _ in half_resized]
 quarter_labels = [Q_LABEL for _ in quarter_resized]
 eighth_labels = [E_LABEL for _ in eighth_resized]
 sixteenth_labels = [S_LABEL for _ in sixteenth_resized]
+bloat_labels = [B_LABEL for _ in bloat_resized]
 
 print(len(full_resized))
 print(len(half_resized))
 print(len(quarter_resized))
 print(len(eighth_resized))
 print(len(sixteenth_resized))
+print(len(bloat_resized))
 
 notes = full_resized + half_resized + quarter_resized + eighth_resized + sixteenth_resized
 labels = full_labels + half_labels + quarter_labels + eighth_labels + sixteenth_labels
@@ -241,11 +260,14 @@ from sklearn.neighbors import KNeighborsClassifier
 
 K=5
 
+from sklearn.ensemble import IsolationForest
+forest = IsolationForest(n_estimators=10, warm_start=True)
+forest.fit(X_train)
+dump(forest, 'forest.fumo')
+
 clf = KNeighborsClassifier(n_neighbors=K)
 clf.fit(X_train, y_train)
-KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-           metric_params=None, n_jobs=1, n_neighbors=5, p=2,
-           weights='uniform')
+
 y_test_pred = clf.predict(X_test)
 from sklearn.metrics import classification_report
 print(classification_report(y_test, y_test_pred, target_names=['F', 'H', 'Q', 'E', 'S']))
