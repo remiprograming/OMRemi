@@ -43,26 +43,34 @@ def load_object(im):
                 arr.append(y)
 
     fin = np.array(arr)
-    fin = fin.reshape(1, -1)
+    fin = fin.reshape((1, 64, 64, 1))
 
     dupac += 1
     return fin
 
 def recognize(image):
 
-    image = load_object(image)
-
-    model = load('clf.fumo')
-    pred = model.predict(image)
-    predp = model.predict_proba(image)
-    return pred, predp
-
-    # t = load_object(image)
+    # image = load_object(image)
     #
-    # model = tf.keras.models.load_model('model')
-    # pred = model.predict(t)
-    # score = tf.nn.softmax(pred[0])
-    # return pred, score
+    # forest = load('forest.fumo')
+    # pred = forest.predict(image)
+    # print(pred)
+    # if pred == 1:
+    #     model = load('clf.fumo')
+    #     predi = model.predict(image)
+    #     predp = model.predict_proba(image)
+    #     return predi, predp
+    # else:
+    #     return '10', [0]
+
+
+
+    t = load_object(image)
+
+    model = tf.keras.models.load_model('model')
+    pred = model.predict(t)
+    score = tf.nn.softmax(pred[0])
+    return pred, score
 
 
 def find_notes(centroids, staf):

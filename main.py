@@ -3,8 +3,10 @@
 # import csv
 # import cv2
 import os
+from itertools import cycle
 
 import cv2
+import numpy as np
 from muscima.io import parse_cropobject_list
 # import numpy as np
 # import matplotlib.pyplot as plt
@@ -174,12 +176,12 @@ def show_masks(masks, row_length=5):
 # print("quarter", quarter_images)
 # print("eifht", eighth_images)
 # print("sixteen", sixteenth_images)
-show_masks(full_images[:25])
-show_masks(half_images[:25])
-show_masks(quarter_images[:25])
-show_masks(eighth_images[:25])
-show_masks(sixteenth_images[:25])
-show_masks(bloat_images[:25])
+# show_masks(full_images[:25])
+# show_masks(half_images[:25])
+# show_masks(quarter_images[:25])
+# show_masks(eighth_images[:25])
+# show_masks(sixteenth_images[:25])
+# show_masks(bloat_images[:25])
 
 def paste(im):
     #resize image im to be of size (64, 64) preserving aspect ratio
@@ -195,7 +197,7 @@ def paste(im):
         blank[yoff:yoff + h, xoff:xoff + w] = im_resized
     except:
         print('error')
-
+    print(blank.shape)
     return blank
 
 
@@ -218,12 +220,12 @@ sixteenth_resized = [numpy.where(n > 0, 1, 0) for n in sixteenth_resized]
 bloat_resized = [numpy.where(n > 0, 1, 0) for n in bloat_resized]
 
 
-show_masks(full_resized[:25])
-show_masks(half_resized[:25])
-show_masks(quarter_resized[:25])
-show_masks(eighth_resized[:25])
-show_masks(sixteenth_resized[:25])
-show_masks(bloat_resized[:25])
+# show_masks(full_resized[:25])
+# show_masks(half_resized[:25])
+# show_masks(quarter_resized[:25])
+# show_masks(eighth_resized[:25])
+# show_masks(sixteenth_resized[:25])
+# show_masks(bloat_resized[:25])
 
 F_LABEL = 0
 H_LABEL = 1
@@ -252,23 +254,99 @@ notes_flat = [n.flatten() for n in notes]
 
 from sklearn.model_selection import train_test_split
 
-X_train, X_test, y_train, y_test = train_test_split(
-    notes_flat, labels, test_size=0.25, random_state=42,
-    stratify=labels)
+X_train, X_test, y_train, y_test = train_test_split(notes_flat, labels, test_size=0.25, random_state=42,stratify=labels)
+X_train = numpy.array(X_train).reshape((-1, 64, 64, 1))
+X_test = numpy.array(X_test).reshape((-1, 64, 64, 1))
+y_train = numpy.array(y_train)
+y_test = numpy.array(y_test)
 
-from sklearn.neighbors import KNeighborsClassifier
 
-K=5
 
-from sklearn.ensemble import IsolationForest
-forest = IsolationForest(n_estimators=10, warm_start=True)
-forest.fit(X_train)
-dump(forest, 'forest.fumo')
+# from sklearn.neighbors import KNeighborsClassifier
+#
+# K=5
 
-clf = KNeighborsClassifier(n_neighbors=K)
-clf.fit(X_train, y_train)
 
-y_test_pred = clf.predict(X_test)
-from sklearn.metrics import classification_report
-print(classification_report(y_test, y_test_pred, target_names=['F', 'H', 'Q', 'E', 'S']))
-dump(clf, 'clf.fumo')
+# arr = []
+# l=len(X_train)
+# i=1
+# for sample in X_train:
+#     print(f'{i}/{l}')
+#     sample = sample.tolist()
+#     arr.extend(sample)
+#     i+=1
+#
+# arr = numpy.array(arr)
+# arr = arr.reshape((64**2, len(X_train)))
+# print(arr.shape)
+# print(arr)
+# from sklearn.metrics import classification_report, roc_curve, auc, ConfusionMatrixDisplay, confusion_matrix
+#
+# from sklearn.ensemble import IsolationForest
+# forest = IsolationForest(n_estimators=100, max_samples=128, contamination=(len(bloat_resized)/len(X_train)))
+# forest.fit(X_train)
+#
+#
+# predictions = forest.predict(X_test)
+# print(classification_report(y_test, predictions))
+# cm = confusion_matrix(y_test, predictions)
+# disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+# disp.plot()
+# plt.show()
+
+# dump(forest, 'forest.fumo')
+
+# clf = KNeighborsClassifier(n_neighbors=K)
+# clf.fit(X_train, y_train)
+#
+# y_test_pred = clf.predict(X_test)
+
+
+# print(classification_report(y_test, y_test_pred, target_names=['F', 'H', 'Q', 'E', 'S', 'B']))
+# cm = confusion_matrix(y_test, y_test_pred)
+# disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=clf.classes_)
+# disp.plot()
+# plt.show()
+# # Compute ROC curve and ROC area for each class
+# # fpr = dict()
+# # tpr = dict()
+# # roc_auc = dict()
+# # for i in range(6):
+# #     fpr[i], tpr[i], _ = roc_curve(y_test, y_test_pred)
+# #     roc_auc[i] = auc(fpr[i], tpr[i])
+# #
+# #
+# # for i in range(6):
+# #     plt.plot(fpr[i],tpr[i],label="ROC curve of class {0} (area = {1:0.2f})".format(i, roc_auc[i]))
+# # plt.show()
+#
+# dump(clf, 'clf.fumo')
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
+
+model = models.Sequential()
+model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(64, 64, 1)))
+model.add(layers.MaxPooling2D((2, 2)))
+model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D((2, 2)))
+model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+
+model.add(layers.Flatten())
+model.add(layers.Dense(64, activation='relu'))
+model.add(layers.Dense(5))
+
+model.compile(optimizer='adam',loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+history = model.fit(X_train, y_train, epochs=5, validation_data=(X_test, y_test))
+
+plt.plot(history.history['accuracy'], label='accuracy')
+plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.ylim([0.5, 1])
+plt.legend(loc='lower right')
+
+test_loss, test_acc = model.evaluate(X_test,  y_test, verbose=2)
+print(test_acc)
+
+model.save('model')
