@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
+import skimage.measure
+
+import lyrica
 
 from skimage.filters import threshold_otsu
 from skimage.segmentation import clear_border
@@ -35,13 +38,18 @@ def flanderize(image):
     for region in regionprops(label_image):
         # take regions with large enough areas
         if region.area >= 10:
-            boxes.append(region)
-            # draw rectangle around segmented coins
-            minr, minc, maxr, maxc = region.bbox
-            rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr,
-                                      fill=False, edgecolor='red', linewidth=2)
-            ax.add_patch(rect)
 
+            if region.extent <= 0.85:
+                boxes.append(region)
+                # draw rectangle around segmented coins
+                minr, minc, maxr, maxc = region.bbox
+                rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr,
+                                          fill=False, edgecolor='red', linewidth=2)
+                ax.add_patch(rect)
+
+    #sort by x
+
+    boxes.sort(key=lambda x: x.centroid[1])
 
 
     plt.savefig(f'final.png')
@@ -62,9 +70,14 @@ def remilialize(file):
     for reg in regions:
         mr, mc, xr, xc = reg.bbox
         temp = im[mr:xr, mc:xc]
-
-        centroids.append(reg.centroid)
         imarr.append(temp)
+        centro = list(reg.centroid)
+        cent = list(skimage.measure.regionprops(temp, temp)[0].centroid_weighted)
+        cent[0] += centro[0]
+        cent[1] += centro[1]
+
+        centroids.append(cent)
+
         cv2.imwrite(f'bloat/object{i}.png', temp)
         i += 1
 
@@ -74,17 +87,18 @@ def remilialize(file):
     for im in imarr:
         pr, scr = sakuya.recognize(im)
         preds.append(f'{i}. {pr}')
-        score.append(f'{i}. {np.argmax(scr)}')
+        score.append(np.argmax(scr))
         i+=1
-    print(preds)
+
+
     print(score)
-
-    print(sakuya.find_notes(centroids, x))
-
+    lyrica.build_midi(sakuya.find_notes(centroids, x), score)
 
 
 
-file = f'sscore.png'
+
+
+file = f'hard.png'
 remilialize(file)
 
 

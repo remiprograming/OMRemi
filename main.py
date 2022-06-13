@@ -237,8 +237,11 @@ B_LABEL = 5
 full_labels = [F_LABEL for _ in full_resized]
 half_labels = [H_LABEL for _ in half_resized]
 quarter_labels = [Q_LABEL for _ in quarter_resized]
+
 eighth_labels = [E_LABEL for _ in eighth_resized]
 sixteenth_labels = [S_LABEL for _ in sixteenth_resized]
+
+
 bloat_labels = [B_LABEL for _ in bloat_resized]
 
 print(len(full_resized))
@@ -337,7 +340,7 @@ model.add(layers.Dense(64, activation='relu'))
 model.add(layers.Dense(5))
 
 model.compile(optimizer='adam',loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
-history = model.fit(X_train, y_train, epochs=5, validation_data=(X_test, y_test))
+history = model.fit(X_train, y_train, epochs=3, validation_data=(X_test, y_test))
 
 plt.plot(history.history['accuracy'], label='accuracy')
 plt.plot(history.history['val_accuracy'], label = 'val_accuracy')

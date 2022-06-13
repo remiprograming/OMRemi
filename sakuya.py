@@ -26,12 +26,11 @@ def load_object(im):
     hh, ww = blank.shape
     yoff = round((hh - h) / 2)
     xoff = round((ww - w) / 2)
-    print(im.shape)
-    print(blank.shape)
+
     try:
         blank[yoff:yoff + h, xoff:xoff + w] = im
     except:
-        print('error')
+        pass
 
     cv2.imwrite(f'bloac/object{dupac}.png', blank)
     arr = []
@@ -69,6 +68,7 @@ def recognize(image):
 
     model = tf.keras.models.load_model('model')
     pred = model.predict(t)
+
     score = tf.nn.softmax(pred[0])
     return pred, score
 
@@ -78,8 +78,8 @@ def find_notes(centroids, staf):
     duppa = 0
     for x in centroids:
         try:
-            notes.append(staf.getPitch(x[0]) + f' {duppa}')
+            notes.append(f'{staf.getPitch(x[0])}')
         except:
-            notes.append(f'{duppa}')
+            pass
         duppa +=1
     return notes
